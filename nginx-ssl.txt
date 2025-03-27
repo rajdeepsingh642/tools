@@ -1,0 +1,81 @@
+setup ssl
+sudo mkdir -p /etc/ssl/rajdeep.shop
+cd /etc/ssl/rajdeep.shop
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rajdeep.shop.key -out rajdeep.shop.crt
+vi /etc/nginx/conf.d/rajdeep.shop.conf
+#############################################
+server {
+    listen 443 ssl;
+    server_name rajdeep.shop www.rajdeep.shop;
+
+    ssl_certificate /etc/ssl/rajdeep.shop/rajdeep.shop.crt;
+    ssl_certificate_key /etc/ssl/rajdeep.shop/rajdeep.shop.key;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}
+
+server {
+    listen 80;
+    server_name rajdeep.shop www.rajdeep.shop;
+    return 301 https://$host$request_uri;
+}
+################################################
+PROXY PASS
+##########################################
+server {
+    listen 443 ssl;
+    server_name rajdeep.shop www.rajdeep.shop;
+
+    ssl_certificate /etc/ssl/rajdeep.shop/rajdeep.shop.crt;
+    ssl_certificate_key /etc/ssl/rajdeep.shop/rajdeep.shop.key;
+
+    location / {
+        proxy_pass http://localhost:3000;  # Change this to your backend server
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name rajdeep.shop www.rajdeep.shop;
+    return 301 https://$host$request_uri;
+}
+########################################################################
+server {
+    listen 443 ssl;
+    server_name rajdeep.shop www.rajdeep.shop;
+
+    ssl_certificate /etc/ssl/rajdeep.shop/rajdeep.shop.crt;
+    ssl_certificate_key /etc/ssl/rajdeep.shop/rajdeep.shop.key;
+
+    location / {
+        proxy_pass http://localhost:3000/get-items;  # Change this to your backend server
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name rajdeep.shop www.rajdeep.shop;
+    #return 301 https://$host$request_uri;
+
+    location /app {
+            proxy_pass http://localhost:3000/get-items;
+    }
+}
+
+#########################################################################
+sudo nginx -t
+sudo systemctl restart nginx
+sudo certbot certonly --standalone -d ssl.rajdeep.shop
+
+

@@ -1,0 +1,52 @@
+sudo apt update && sudo apt install ddclient
+sudo nano /etc/ddclient.conf
+ssl=yes
+protocol=cloudflare
+use=web
+server=api.cloudflare.com/client/v4
+login=YOUR_CLOUDFLARE_EMAIL
+password=YOUR_CLOUDFLARE_API_KEY
+zone=rajdeep.shop
+app.rajdeep.shop
+
+sudo systemctl restart ddclient
+##########################################################################
+Sign up on Cloudflare (cloudflare.com)
+2️⃣ Add your domain (rajdeep.shop)
+Use Cloudflare Tunnel
+curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+chmod +x cloudflared
+sudo mv cloudflared /usr/local/bin/
+cloudflared tunnel login
+cloudflared tunnel create my-app
+#########################################
+Route traffic to your local app:
+cloudflared tunnel route dns my-app rajdeep.shop
+cloudflared tunnel run my-app
+#######################################################
+error
+cloudflared tunnel --config /root/.cloudflared/e3f84aa0-4056-4273-9a9d-0d58d93b79bc.json run my-app
+mv /root/.cloudflared/e3f84aa0-4056-4273-9a9d-0d58d93b79bc.json /root/.cloudflared/my-app.json
+cloudflared tunnel run my-app
+
+
+
+
+sudo nano /etc/systemd/system/cloudflared.service
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cloudflared tunnel run my-app
+Restart=always
+User=root
+WorkingDirectory=/root/.cloudflared
+[Install]
+WantedBy=multi-user.target
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+sudo systemctl daemon-reload
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared

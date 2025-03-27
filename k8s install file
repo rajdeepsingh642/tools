@@ -1,0 +1,163 @@
+sudo -s
+
+printf "\n192.168.15.93 k8s-control\n192.168.15.94 k8s-2\n\n" >> /etc/hosts
+
+printf "overlay\nbr_netfilter\n" >> /etc/modules-load.d/containerd.conf
+
+modprobe overlay
+modprobe br_netfilter
+
+printf "net.bridge.bridge-nf-call-iptables = 1\nnet.ipv4.ip_forward = 1\nnet.bridge.bridge-nf-call-ip6tables = 1\n" >> /etc/sysctl.d/99-kubernetes-cri.conf
+
+sysctl --system
+
+wget https://github.com/containerd/containerd/releases/download/v1.6.16/containerd-1.6.16-linux-amd64.tar.gz -P /tmp/
+tar Cxzvf /usr/local /tmp/containerd-1.6.16-linux-amd64.tar.gz
+wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -P /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now containerd
+
+wget https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64 -P /tmp/
+install -m 755 /tmp/runc.amd64 /usr/local/sbin/runc
+
+wget https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz -P /tmp/
+mkdir -p /opt/cni/bin
+tar Cxzvf /opt/cni/bin /tmp/cni-plugins-linux-amd64-v1.2.0.tgz
+
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml   <<<<<<<<<<< manually edit and change systemdCgroup to true
+nano /etc/containerd/config.toml
+
+
+
+systemctl restart containerd
+swapoff -a    or    nano  /etc/fstab instead
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main" 
+apt-get update
+
+reboot
+
+sudo -s
+apt-get install -y kubelet=1.26.1-00 kubeadm=1.26.1-00 kubectl=1.26.1-00
+apt-mark hold kubelet kubeadm kubectl
+free -m
+  kubeadm init --pod-network-cidr 10.10.0.0/16 --kubernetes-version 1.26.1 --node-name k8s-control
+   kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
+  wget https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
+#################################################
+    vi custom-resources.yaml
+    kubectl apply -f custom-resources.yaml
+   ###
+   ###Deploying Flannel with kubectl
+
+  kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  
+  
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+ 
+
+
+
+# get worker node commands to run to join additional nodes into cluster
+kubeadm token create --print-join-command
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+mv /etc/kubernetes/kubelet.conf /etc/kubernetes/admin.conf
+mv  $HOME/.kube $HOME/.kube.bak
+mkdir $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+
+
+
+
+
+####any error worker node
+ 
+ 
+ # config not found
+ mkdir .kube
+ nano config <<add master node values
+ ### config not found
+ mv /etc/kubernetes/kubelet.conf /etc/kubernetes/admin.conf
+
+
+#
+##cni error  
+   mkdir -p /opt/cni/bin
+curl -O -L https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz
+tar -C /opt/cni/bin -xzf cni-plugins-linux-amd64-v1.2.0.tgz
+
+ systemctl restart containerd
+ journalctl -u kubelet -f
+  
+  
+  
+  
+  
+  kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
+
+### refuse lost localhost
+$ sudo -i
+# swapoff -a
+# exit
+$ strace -eopenat kubectl version
+
+
+ # How to reproduce it (as minimally and precisely as possible)?
+
+    #I provisioned two same Ubuntu 20 (5.8.0-50-generic) VMs, then created two different clusters using kubespray: foo and baz, for example.
+    $ ssh root@foo  # SSH into master server of foo-master-1
+    $ kubeadm token create --print-join-command
+    ssh root@bar  # SSH into a worker node of bar: bar-worker-1
+    $ kubeadm reset  # reset first
+    $ kubeadm join $IP:6443 --token $TOKEN     --discovery-token-ca-cert-hash $CA_CERT_HASH
+    $ systemctl daemon-reload; systemctl restart kubelet
+    $ curl https://10.233.0.1:443/healthz --cacert /etc/kubernetes/pki/ca.crt
+    See the SSL error:
+
+
+
+
+
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+kubectl get all -A
+###############################################################################################################################################
+scp user@master-node:/etc/kubernetes/admin.conf ~/.kube/config
+
+Replace user@master-node with the actual username and IP address of the master node.
+
+Ensure the directory ~/.kube exists on your remote machine. If it doesn’t, create it:
+
+bash
+
+mkdir -p ~/.kube
+
+After copying, ensure the file permissions for the config file are set correctly:
+
+bash
+
+chmod 600 ~/.kube/config
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+journalctl -u kubelet -f
+systemctl daemon-reload
+sudo systemctl restart kubelet
+sudo systemctl restart NetworkManager
+sudo systemctl restart systemd-resolved
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+grafana-cli admin reset-admin-password <new_password>

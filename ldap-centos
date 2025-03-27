@@ -1,0 +1,201 @@
+configure in ldap server machine side
+hostnamectl  set-hostname server.example.com
+192.168.189.253    instructor.example.com
+192.168.189.250    client.example.com
+
+sudo yum install openldap* -y
+slappasswd -s redhat -n > /etc/openldap/passwd
+cat  /etc/openldap/passwd
+vim passwd
+
+###########################################################################################################
+set ssl
+openssl req -new -x509 -nodes -out /etc/openldap/certs/cert.pem  -keyout  /etc/openldap/certs/priv.pem -days 365
+
+cd /etc/openldap/certs/
+
+chown ldap:ldap *
+chmod 600 priv.pem
+##########################################################################################################
+prepare Ldap data base variable file
+cp /usr/share/openldap-servers/DB_CONFIG.example  /var/lib/ldap/DB_CONFIG
+########################
+check data base correct or not
+slaptest 
+chown ldap:ldap /var/lib/ldap/*
+systemctl enable --now slapd
+#####################################################################################
+add schemaa in ldap
+cd /etc/openldap/schema/
+#####add scemaa in cosine
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f cosine.ldif
+###nis file add scemma 
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f nis.ldif
+###############################################################################################
+create file 
+vim /etc/openldap/changes.ldif
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=example,dc=com
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=example,dc=com
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: PASSWORD # {SSHA}mLHJBWNRXLjmMqkxqANpDFVSuOEUuoH4 add karna hai
+
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/cert.pem
+
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/priv.pem
+
+dn: cn=config
+changetype: modify
+replace: olcLogLevel
+olcLogLevel: -1
+
+dn: olcDatabase={1}monitor,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read by dn.base="cn=Manager,dc=example,dc=com" read by * none
+
+
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/cert.pem
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/priv.pem
+####################################################################
+data ko ldap directory m send kare gye
+ldapmodify -Y EXTERNAL -H ldapi:///  -f /etc/openldap/changes.ldif
+
+vim /etc/openldap/base.ldif
+
+dn: dc=example,dc=com
+dc: example
+objectClass: top
+objectClass: domain
+
+dn: ou=People,dc=example,dc=com
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Group,dc=example,dc=com
+ou: Group
+objectClass: top
+objectClass: organizationalUnit
+
+
+$$$directory structure build kar rhe h
+ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f /etc/openldap/base.ldif
+################################################################################################
+ldap client ki entry karwani h 
+mkdir /home/guests
+useradd kare gye abh hum
+useradd -d /home/guests/ldapuser01 ldapuser01
+passwd ldapuser01  # redhat
+useradd -d /home/guests/ldapuser02 ldapuser02
+passwd ldapuser02
+################################################################
+goto the directory of user  account migration 
+inki entry ldap ke ander karni padhe gi
+cd /usr/share/migrationtools/
+open domain file
+vim migrate_common.ph 
+# Default DNS domain
+$DEFAULT_MAIL_DOMAIN = "example.com"; ## change karna h domain my domain is example.com
+# Default base 
+$DEFAULT_BASE = "dc=example,dc=com";
+###########################################################################
+user ki id ko copy kar lete h a  jinki id 1000 se agye ki hunko
+grep ":10[0-9][0-9]" /etc/passwd > passwd
+
+##user.ldif nam ki file create kare gye with passwd fle ke sath script run kare gye migrate_passwd.pl 
+./migrate_passwd.pl passwd users.ldif
+
+##abh user.ldif file me jo deta h uski help se user ki entry kar det h ldap ke andher
+ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f users.ldif 
+
+###ab same kam groups ke andher kare gye vo do user create kiye the
+ grep ":10[0-9][0-9]" /etc/group  > group
+ ./migrate_group.pl group groups.ldif
+ ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f groups.ldif 
+ 
+ check kar lo ki entry ho gyi ya nahi
+ ldapsearch -x cn=ldapuser01 -b dc=example,dc=com
+ ###############################################################################
+ allow ldap in firewalld 
+ firewall-cmd --permanent --add-service=ldap
+ firewall-cmd --reload
+######################################################
+logs ki entry karwana
+vim /etc/rsyslog.conf
+bilkul niche wntry karni h
+local4.* /var/log/ldap.log
+systemctl restart rsyslog
+#########################################################################
+directory mount ke liye nfs install 
+yum install -y nfs* rpcbind mounted
+vim /etc/exports
+/home  *(rw,sync)
+systemctl enable --now rpcbind nfs
+test cnnection  showmount -e
+
+firewall-cmd --add-service={nfs3,mountd,rpc-bind} --permanent
+firewall-cmd --reload
+#####################################################################################################################################
+open client machine
+
+hostnamectl  set-hostname client.example.com
+ vim /etc/hosts
+ 
+ yum install -y openldap-clients
+ yum install -y autofs
+ yum install -y nss-pam-ldapd
+ 
+####ldap server machine ke user jo bnaye he vo fect ho rhe h ya nai check
+getent passwd ldapuser01
+show ni hoga
+solve this command
+authconfig-tui
+
+select USE LDAP, USE LDAP AUTHENTI, USE SHADOW,USE FINGER,LOCAL AUTH
+next set ldap server ip 
+##check
+getent passwd ldapuser01
+
+############################################
+configure  autofs
+
+
+vim /etc/auto.master.d/home.autofs
+/home/guests    /etc/auto.home
+
+vim /etc/auto.home
+ldapuser01      -rw,sync        192.168.189.253:/home/guests/&
+ldapuser02      -rw,sync        192.168.189.253:/home/guests/&
+
+systemctl restart autofs
+systemctl enable autofs
+ 
+
+
+
+
+
+
+
+

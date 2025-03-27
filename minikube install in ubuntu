@@ -1,0 +1,16 @@
+Installation Steps
+Step 1. Installing Docker
+sudo apt  install docker.io
+
+Step 2. Updating system packages and installing Minikube dependencies
+ sudo apt update
+ sudo apt install -y curl wget apt-transport-https
+ 
+Step 3. Installing Minikube
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+minikube version
+Step 4. Installing kubectl utility
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin

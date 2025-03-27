@@ -1,0 +1,128 @@
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+#########################################
+sudo yum install -y containerd.io
+
+
+
+install k8s
+ KUBERNETES_VERSION=v1.30
+
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/repodata/repomd.xml.key
+EOF
+ 
+ mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml   <<<<<<<<<<< manually edit and change systemdCgroup to true
+nano /etc/containerd/config.toml
+sudo dnf install kubelet kubeadm kubectl -y
+
+
+sudo kubeadm init --pod-network-cidr=192.168.123.0/24
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+ kubectl get pods --all-namespaces
+ 
+systemctl restart containerd
+   swapoff -a
+    
+    4  systemctl daemon-reload
+    5  systemctl restart containerd
+    6  systemctl restart kubelet
+
+
+@@@@@@@@@@@@@@errorr
+echo 1 > /proc/sys/net/ipv4/ip_forward
+############################################################################################################################
+Create Service Account, Role & Assign that role, And create a secret for Service Account and geenrate a Token
+Creating Service Account
+kubectl create ns webapps
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins
+  namespace: webapps
+kubectl create ns webapps
+kubectl apply -f svc.yml
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Create Role
+ apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app-role
+  namespace: webapps
+rules:
+  - apiGroups:
+        - ""
+        - apps
+        - autoscaling
+        - batch
+        - extensions
+        - policy
+        - rbac.authorization.k8s.io
+    resources:
+      - pods
+      - secrets
+      - componentstatuses
+      - configmaps
+      - daemonsets
+      - deployments
+      - events
+      - endpoints
+      - horizontalpodautoscalers
+      - ingress
+      - jobs
+      - limitranges
+      - namespaces
+      - nodes
+      - pods
+      - persistentvolumes
+      - persistentvolumeclaims
+      - resourcequotas
+      - replicasets
+      - replicationcontrollers
+      - serviceaccounts
+      - services
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+ Bind the role to service account
+ vi bind.yml
+ apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: app-rolebinding
+  namespace: webapps 
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: app-role 
+subjects:
+- namespace: webapps 
+  kind: ServiceAccount
+  name: jenkins 
+  
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     
+Generate token using service account in the namespace
+vi sec.yml
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: mysecretname
+  annotations:
+    kubernetes.io/service-account.name: jenkins
+    
+ kubectl apply -f sec.yml -n webapps
+ ###########################################################################################################################################################################
+ insall kuectl agent on jenkins server
+ 
+ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin
+kubectl version --short --client

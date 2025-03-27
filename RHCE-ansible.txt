@@ -1,0 +1,41 @@
+vi ansible.cfg
+[defaults]
+inventory= 	/home/ansible/inventory
+roles_path=	/home/ansible/roles:/usr/share/ansible/roles
+remote_user=	automation
+ask_pass= 	false
+
+[privilege_escalation]
+become=	true
+become_method=	sudo
+become_user=	root
+become_ask_pass= false
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+vi inventory
+[dev]
+node1.lab.example.com
+
+
+[test]
+node2.lab.example.com
+
+
+[prod]
+node3.lab.example.com
+node4.lab.example.com
+
+[balancer]
+node5.lab.example.com
+
+
+
+[webservers:children]
+prod
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+192.168.123.135         node1.lab.example.com node1
+192.168.123.136         node2.lab.example.com node2
+192.168.123.137         node3.lab.example.com node3
+192.168.123.138         node4.lab.example.com node4
+192.168.123.139         node5.lab.example.com node5
+
+

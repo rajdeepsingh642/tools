@@ -1,0 +1,145 @@
+To install Apache, MySQL, and WordPress on Ubuntu, you can follow these steps:
+Step 1: Update your package list
+
+bash
+
+sudo apt update
+
+Step 2: Install Apache
+
+bash
+
+sudo apt install apache2 -y
+
+    Enable Apache to start on boot and start it now:
+
+bash
+
+sudo systemctl enable apache2
+sudo systemctl start apache2
+
+    Check Apache status to ensure it's running:
+
+bash
+
+sudo systemctl status apache2
+
+Step 3: Install MySQL
+
+bash
+
+sudo apt install mysql-server -y
+
+    Secure MySQL installation:
+
+bash
+
+sudo mysql_secure_installation
+
+Follow the prompts to set up your MySQL root password and secure the installation.
+Step 4: Install PHP
+
+WordPress requires PHP, so install it along with the necessary extensions:
+
+bash
+
+sudo apt install php php-mysql libapache2-mod-php php-cli php-cgi php-gd -y
+
+    Restart Apache to load PHP:
+
+bash
+
+sudo systemctl restart apache2
+
+Step 5: Create a MySQL Database for WordPress
+
+    Log into the MySQL shell:
+
+    bash
+
+sudo mysql
+
+Create a database for WordPress:
+
+sql
+
+CREATE DATABASE wordpress;
+
+Create a user for WordPress:
+
+sql
+
+CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'password';
+
+Grant all privileges to this user:
+
+sql
+
+GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost';
+
+Flush the privileges:
+
+sql
+
+    FLUSH PRIVILEGES;
+    EXIT;
+
+Step 6: Download and Configure WordPress
+
+    Download WordPress:
+
+    bash
+
+wget -c http://wordpress.org/latest.tar.gz
+
+Extract the WordPress archive:
+
+bash
+
+tar -xzvf latest.tar.gz
+
+Move the extracted files to the web root:
+
+bash
+
+sudo mv wordpress/* /var/www/html/
+
+Set proper permissions:
+
+bash
+
+sudo chown -R www-data:www-data /var/www/html/
+sudo chmod -R 755 /var/www/html/
+
+Create the WordPress configuration file:
+
+bash
+
+sudo mv /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+
+Edit the WordPress configuration file to add your database details:
+
+bash
+
+sudo nano /var/www/html/wp-config.php
+
+Update the following lines:
+
+php
+
+    define('DB_NAME', 'wordpress');
+    define('DB_USER', 'wpuser');
+    define('DB_PASSWORD', 'password');
+    define('DB_HOST', 'localhost');
+
+Step 7: Complete WordPress Installation
+
+    Open a browser and visit your server's IP address:
+
+    arduino
+
+    http://your-server-ip
+
+    Follow the on-screen instructions to complete the WordPress setup by entering your site name, admin username, and password.
+
+WordPress should now be up and running!

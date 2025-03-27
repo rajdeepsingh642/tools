@@ -1,0 +1,164 @@
+yum configure
+[baseos]
+name=baseos
+baseurl=file:///mnt/BaseOS
+gpgcheck=0
+enabled=1
+[appstream]
+name=appstream
+baseurl=file:///mnt/AppStream
+gpgcheck=0
+enabled=1
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+install Ansible
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install ansible
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jenkins install
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo yum upgrade
+# Add required dependencies for the jenkins package
+sudo yum install fontconfig java-17-openjdk
+sudo yum install jenkins
+sudo systemctl daemon-reload
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+##################################################
+# Set JAVA_HOME
+find / -name java-17*
+export JAVA_HOME=/path/to/your/java/home
+
+# Set MAVEN_HOME
+export MAVEN_HOME=/path/to/your/maven/home
+
+# Add Java and Maven to PATH
+export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
+####################################################################################
+docker install
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl start docker
+###############################################################################
+sonarqube and nexus 
+docker pull sonarqube:latest
+docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+docker pull sonatype/nexus3
+docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
+find nexus passwd 
+docker exec -it dee2345 /bin/bash
+go to
+cd sonatype-work
+cd nexus3
+cat admin.password
+
+
+#################################################################################################################################
+Podman  install
+sudo dnf install podman-4.* podman-remote-4.*
+ install the containernetworking-plugins package using
+sudo dnf -y install containernetworking-plugins
+cp /usr/share/containers/containers.conf /etc/containers/
+###########################################################################################
+install k8s
+ KUBERNETES_VERSION=v1.30
+
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/repodata/repomd.xml.key
+EOF
+
+sudo dnf install kubelet kubeadm kubectl -y
+sudo kubeadm init --pod-network-cidr=192.168.123.0/24
+ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+ kubectl get pods --all-namespaces
+ 
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml   <<<<<<<<<<< manually edit and change systemdCgroup to true
+nano /etc/containerd/config.toml
+
+@@@@@@@@@@@@@@errorr
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+
+
+##########################################################################################################################
+prometheus and grafana
+vim prometheus.yml
+
+Prometheus and Alertmanager Configuration
+Prometheus Configuration (prometheus.yml)
+Global Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+global:
+  scrape_interval: 15s                # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s            # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alertmanager Configuration
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 'localhost:9093'          # Alertmanager endpoint
+
+Rule Files
+
+rule_files:
+   - "alert_rules.yml"                # Path to alert rules file
+  # - "second_rules.yml"              # Additional rule files can be added here
+
+Scrape Configuration
+Prometheus Itself
+
+scrape_configs:
+  - job_name: "prometheus"            # Job name for Prometheus
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9090"]   # Target to scrape (Prometheus itself)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Node Exporter
+
+  - job_name: "node_exporter"         # Job name for node exporter
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["3.110.195.114:9100"]  # Target node exporter endpoint
+  - job_name: 'jenkins'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ["192.168.123.128:8080"]
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Blackbox Exporter
+
+  - job_name: 'blackbox'              # Job name for blackbox exporter
+    metrics_path: /probe              # Path for blackbox probe
+    params:
+      module: [http_2xx]              # Module to look for HTTP 200 response
+    static_configs:
+      - targets:
+        - http://prometheus.io        # HTTP target
+        - https://prometheus.io       # HTTPS target
+        - http://3.110.195.114:8080/  # HTTP target with port 8080 deploy ki h jha aaplication k8s ka address
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 13.235.248.225:9115  # Blackbox exporter address
+

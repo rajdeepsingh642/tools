@@ -1,0 +1,65 @@
+yum configure
+[baseos]
+name=baseos
+baseurl=file:///mnt/BaseOS
+gpgcheck=0
+enabled=1
+[appstream]
+name=appstream
+baseurl=file:///mnt/AppStream
+gpgcheck=0
+enabled=1
+
+
+
+
+###########
+Install Apache Web Server
+sudo dnf install httpd -y
+
+#####################
+
+ Install  MySQL
+ sudo wget https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+sudo yum localinstall mysql57-community-release-el7-11.noarch.rpm 
+sudo yum install mysql-community-server
+systemctl start mysqld.service
+ 
+ sudo yum instal mysql
+ sudo dnf install mariadb105
+ 
+ 
+ sudo dnf install mariadb-server
+ sudo mysql_secure_installation
+ 
+ 
+ sudo dnf install php php-mysqlnd php-json php-mbstring -y
+ 
+ 
+ connect rds 
+ mysql -h endpoint -P 3306 -u admin -p
+ 
+ #############################################################
+ Install PhpMyAdmin
+cd /var/www/html
+
+sudo wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz
+
+sudo tar -xvzf phpMyAdmin-latest-all-languages.tar.gz
+sudo mv phpMyAdmin-*/ phpmyadmin
+sudo cp /var/www/html/phpmyadmin/config.sample.inc.php /var/www/html/phpmyadmin/config.inc.php
+sudo nano /var/www/html/phpmyadmin/config.inc.php
+
+pZm8H7b9f3B7nRk5tQ2sM9vL4w6Tj7Xn
+
+ Open Apache Port in firewalld
+ 
+ sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=443/tcp --permanent
+sudo firewall-cmd --reload
+
+sudo systemctl restart httpd
+#############################
+Access PhpMyAdmin
+http://your_server_ip/phpmyadmin 
+ 

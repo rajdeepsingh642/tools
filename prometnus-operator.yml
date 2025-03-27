@@ -1,0 +1,330 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - configmaps
+  - secrets
+  - nodes
+  - pods
+  - services
+  - serviceaccounts
+  - resourcequotas
+  - replicationcontrollers
+  - limitranges
+  - persistentvolumeclaims
+  - persistentvolumes
+  - namespaces
+  - endpoints
+  verbs:
+  - list
+  - watch
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  - daemonsets
+  - deployments
+  - replicasets
+  verbs:
+  - list
+  - watch
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - list
+  - watch
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - list
+  - watch
+- apiGroups: ["authentication.k8s.io"]
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups: ["authorization.k8s.io"]
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups: ["policy"]
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - list
+  - watch
+- apiGroups: ["certificates.k8s.io"]
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - list
+  - watch
+- apiGroups: ["discovery.k8s.io"]
+  resources:
+  - endpointslices
+  verbs:
+  - list
+  - watch
+- apiGroups: ["storage.k8s.io"]
+  resources:
+  - storageclasses
+  - volumeattachments
+  verbs:
+  - list
+  - watch
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - list
+  - watch
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - networkpolicies
+  - ingressclasses
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["coordination.k8s.io"]
+  resources:
+  - leases
+  verbs:
+  - list
+  - watch
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  - rolebindings
+  - roles
+  verbs:
+  - list
+  - watch
+- apiGroups: [""]
+  resources:
+  - nodes/metrics
+  verbs:
+  - get
+- nonResourceURLs:
+  - /metrics
+  - /metrics/slis
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+
+---  
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  image: quay.io/prometheus/prometheus:v3.1.0
+  nodeSelector:
+    kubernetes.io/os: linux
+  replicas: 2
+  resources:
+    requests:
+      memory: 400Mi
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: prometheus
+  version: 3.1.0
+  serviceMonitorSelector: {}
+  podMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  probeNamespaceSelector: {}
+  probeSelector: {}
+  ruleNamespaceSelector: {}
+  ruleSelector: {}
+  scrapeConfigNamespaceSelector: {}
+  scrapeConfigSelector: {}
+  serviceMonitorNamespaceSelector: {}
+  
+  ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 3.1.0
+  name: prometheus-k8s
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9090
+    targetPort: 9090
+  - name: reloader-web
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: prometheus  # यह वही label होना चाहिए जो Prometheus pod पर लगा है
+  sessionAffinity: ClientIP
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-k8s
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 3.1.0
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+  - interval: 30s
+    port: reloader-web
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/part-of: kube-prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-state-metrics
+    spec:
+      containers:
+      - name: kube-state-metrics
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
+        args:
+        - --port=8081
+        resources:
+          limits:
+            cpu: 50m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+spec:
+  ports:
+  - name: http-metrics
+    port: 8081
+    targetPort: 8081
+  selector:
+    app.kubernetes.io/name: kube-state-metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  endpoints:
+  - interval: 30s
+    port: http-metrics
+    scheme: http
+    scrapeTimeout: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubelet
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kubelet
+spec:
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubelet
+  endpoints:
+    - port: https-metrics
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+      interval: 30s
+      honorLabels: true
+      metricRelabelings:
+        - action: drop
+          regex: process_start_time_seconds
+          sourceLabels: [ __name__ ]
+    - port: https-metrics
+      path: /metrics/cadvisor
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+      interval: 30s
+      honorLabels: true
+    - port: https-metrics
+      path: /metrics/probes
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+      interval: 30s
+      honorLabels: true
+
+  

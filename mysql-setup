@@ -1,0 +1,52 @@
+Setting up the Data Tier
+Install MySQL
+To download MySQL repository package:
+wget https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+To verify the package download:
+ls -lrt 
+To install MySQL repository package:
+sudo dnf install -y mysql80-community-release-el9-1.noarch.rpm 
+To import GPG key:
+sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 
+To update package index:
+sudo dnf update –y 
+To install MySQL server:
+sudo dnf install -y mysql-community-server  
+To start the mysql service:
+sudo systemctl start mysqld
+To enable mysql to start on boot:
+sudo systemctl enable mysqld 
+To secure the mysql installation:
+sudo grep 'temporary password' /var/log/mysqld.log 
+
+sudo mysql_secure_installation 
+
+
+#######################################
+sudo mysql -u root -p
+#set passwd
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'NewPassword';
+FLUSH PRIVILEGES;
+##create user forfrant access
+CREATE USER 'username'@'host' IDENTIFIED BY 'password';
+example=CREATE USER 'react_app'@'localhost' IDENTIFIED BY 'strong_password';
+
+GRANT ALL PRIVILEGES ON database_name.* TO 'username'@'host';
+example= GRANT ALL PRIVILEGES ON react_node_app.* TO 'newuser'@'localhost';
+####create database
+CREATE DATABASE react_node_app;
+USE react_node_app;
+#create table
+CREATE TABLE authors (
+    id INT NOT NULL AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    birthdate DATE,
+    nationality VARCHAR(50),
+    biography TEXT,
+    PRIMARY KEY (id)
+);
+show table
+USE database_name;
+
+

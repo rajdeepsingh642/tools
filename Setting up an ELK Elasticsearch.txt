@@ -1,0 +1,107 @@
+Setting up an ELK (Elasticsearch, Logstash, and Kibana) stack in Docker allows you to quickly deploy the stack for logging and monitoring purposes. Here's a step-by-step guide to get started:
+Prerequisites
+
+    Docker installed on your system.
+    Docker Compose installed for multi-container orchestration.
+
+Steps to Set Up ELK in Docker
+1. Create a docker-compose.yml File
+
+Create a directory for your ELK stack setup and navigate into it. Inside, create a docker-compose.yml file with the following content:
+
+version: '3.8'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - elk
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.0
+    container_name: logstash
+    volumes:
+      - ./logstash/config:/usr/share/logstash/config
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+networks:
+  elk:
+    driver: bridge
+
+volumes:
+  es_data:
+    driver: local
+
+2. Create Logstash Configurations
+
+Create directories for Logstash configurations and pipelines. For example:
+
+mkdir -p logstash/config logstash/pipeline
+
+    logstash/config/logstash.yml:
+
+http.host: "0.0.0.0"
+
+logstash/pipeline/logstash.conf:
+
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      grok {
+        match => { "message" => "%{COMMONAPACHELOG}" }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch:9200"]
+        index => "logs-%{+YYYY.MM.dd}"
+      }
+      stdout { codec => rubydebug }
+    }
+
+3. Start the ELK Stack
+
+Run the following command in the same directory as your docker-compose.yml:
+
+docker-compose up -d
+
+    Access Elasticsearch: http://localhost:9200
+    Access Kibana: http://localhost:5601
+
+

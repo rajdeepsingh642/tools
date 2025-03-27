@@ -1,0 +1,12 @@
+apt install ruby-full
+wget https://aws-codedeploy-ap-south-1.s3.ap-south-1.amazonaws.com/latest/install
+
+chmod +x ./install
+##############################################################################################
+log file also set
+./install auto >/tmp/logfile
+service codedeploy-agent status
+
+
+/usr/lib/jvm/java-1.21.0-openjdk-amd64
+

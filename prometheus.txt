@@ -1,0 +1,205 @@
+ wget https://github.com/prometheus/prometheus/releases/latest/download/prometheus-*.linux-amd64.tar.gz
+    2  yum install wget
+    3  wget https://github.com/prometheus/prometheus/releases/latest/download/prometheus-*.linux-amd64.tar.gz
+    4  wget https://github.com/prometheus/prometheus/releases/download/v3.1.0/prometheus-3.1.0.linux-amd64.tar.gz
+    5  ll
+    6  tar -xvzf prometheus-*.linux-amd64.tar.gz
+    7  ll
+    8  mv prometheus-3.1.0.linux-amd64 prometheus
+    9  ll
+   10  cd prometheus
+   11  ll
+   12  sudo mv prometheus promtool /usr/local/bin/
+   13  sudo mv consoles/ console_libraries/ /etc/prometheus/
+   14  sudo mv prometheus.yml /etc/prometheus/
+   15  sudo useradd --no-create-home --shell /bin/false prometheus
+   16  sudo mkdir /var/lib/prometheus
+   17  sudo chown prometheus:prometheus /var/lib/prometheus /etc/prometheus/ -R
+   18  sudo mv prometheus promtool /usr/local/bin/
+   19  ll
+   20  cd ..
+   21  ll
+   22  sudo mv prometheus promtool /usr/local/bin/
+   23  sudo groupadd --system prometheus
+   24  sudo useradd -s /sbin/nologin --system -g prometheus prometheus
+   25  sudo mkdir /etc/prometheus
+   26  sudo mkdir /var/lib/prometheus
+   27  cd prometheus
+   28  ll
+   29  sudo mv prometheus /usr/local/bin
+   30  sudo mv promtool /usr/local/bin
+   31  sudo chown prometheus:prometheus /usr/local/bin/prometheus
+   32  sudo chown prometheus:prometheus /usr/local/bin/promtool
+   33  sudo chown prometheus:prometheus /usr/local/bin/prometheus
+   34  sudo mv promtool /usr/local/bin
+   35  sudo mv prometheus /usr/local/bin
+   36  sudo mv consoles /etc/prometheus
+   37  sudo mv console_libraries /etc/prometheus
+   38  sudo mv prometheus.yml /etc/prometheus
+   39  sudo mv console_libraries /etc/prometheus
+   40  sudo mv consoles /etc/prometheus
+   41  sudo chown prometheus:prometheus /etc/prometheus
+   42  sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+   43  sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+   44  sudo chown -R prometheus:prometheus /var/lib/prometheus
+   45  vim  /etc/prometheus/prometheus.yml
+   46  vim /etc/systemd/system/prometheus.service
+   47  sudo systemctl daemon-reload
+   48  sudo systemctl enable prometheus
+   49  sudo systemctl start prometheus
+   50  sudo systemctl status prometheus
+   51  ll
+   52  cd ll
+   53  cd ..
+   54  ll
+   55  rm -rf prometheus
+   56  tar vxf prometheus*.tar.gz
+   57  cd prometheus*/
+   58  sudo mv prometheus /usr/local/bin
+   59  ll
+   60  sudo mv promtool /usr/local/bin
+   61  sudo chown prometheus:prometheus /usr/local/bin/prometheus
+   62  sudo chown prometheus:prometheus /usr/local/bin/promtool
+   63  sudo mv consoles /etc/prometheus
+   64   wget https://github.com/prometheus/prometheus/releases/download/v2.43.0/prometheus-2.43.0.linux-amd64.tar.gz
+   65  ll
+   66  tar vxf prometheus*.tar.gz
+   67  cd prometheus
+   68  ll
+   69  cd ..
+   70  ll
+   71  cd prometheus-3.1.0.linux-amd64
+   72  ll
+   73  cd prometheus-2.43.0.linux-amd64
+   74  ll
+   75  sudo mv prometheus /usr/local/bin
+   76  sudo mv promtool /usr/local/bin
+   77  sudo chown prometheus:prometheus /usr/local/bin/prometheus
+   78  sudo chown prometheus:prometheus /usr/local/bin/promtool
+   79  sudo mv consoles /etc/prometheus
+   80  sudo mv console_libraries /etc/prometheus
+   81  sudo mv prometheus.yml /etc/prometheus
+   82  sudo chown prometheus:prometheus /etc/prometheus
+   83  sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+   84  sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+   85  sudo chown -R prometheus:prometheus /var/lib/prometheus
+   86  vim nano /etc/prometheus/prometheus.yml
+   87  vim  /etc/prometheus/prometheus.yml
+   88  vim /etc/systemd/system/prometheus.service
+   89  sudo systemctl daemon-reload
+   90  sudo systemctl enable prometheus
+   91  sudo systemctl start prometheus
+   92  systemctl status prometheus
+   93  yum install net-tools
+   94  netstat -tulpn | grep 9090
+   95  netstat -tulpn 
+   96  systemctl status firewalld
+   97  systemctl stop firewalld
+   98  sudo systemctl restart prometheus
+   99  ll
+  100  cd ..
+  101  ll
+  102  wget https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-*.linux-amd64.tar.gz
+  103  wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
+  104  tar xvfz node_exporter-*.tar.gz
+  105  sudo mv node_exporter-1.5.0.linux-amd64/node_exporter /usr/local/bin
+  106  rm -r node_exporter-1.5.0.linux-amd64*
+  107  ll
+  108* 
+  109  ll
+  110  ls
+  111  node_exporter
+  112  sudo useradd -rs /bin/false node_exporter
+  113  sudo vi /etc/systemd/system/node_exporter.service
+  114  sudo systemctl enable node_exporter
+  115  sudo systemctl daemon-reload
+  116  sudo systemctl start node_exporter
+  117  sudo systemctl status node_exporter
+  118  sudo vim /etc/prometheus/prometheus.yml
+  119  sudo systemctl restart node_exporter
+  120  systemctl restart prometheus
+  121  vim /etc/yum.repos.d/grafana.repo
+  122  sudo yum install grafana
+  123  systemctl status grafana-server
+  124  systemctl start  grafana-server
+  125  systemctl status grafana-server
+  126  yum install stress
+  127  sudo yum install sysbench stress
+  128  sudo yum install  stress
+  129  rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY*
+  130  yum -y install epel-release
+  131  yum -y update
+  132  sudo yum install  stress
+  133  stress --cpu 6 --timeout 30s
+  134  stress --cpu 6 --timeout 90s
+
+
+
+
+
+##############################################################################################################################################
+files
+vim  /etc/prometheus/prometheus.yml
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9090"]
+    
+
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+  
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - "localhost:80"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115
+    scrape_timeout: 10s
+
+####################################################################################################################################################
+vi /etc/blackbox_exporter/blackbox.yml
+
+modules:
+  tcp_connect:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      ip_protocol_fallback: false
+
+

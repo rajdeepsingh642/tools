@@ -1,0 +1,93 @@
+Setting up ELK Stack on Ubuntu
+Step 1: Add Elastic Repository to Ubuntu System Repositories
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+
+Add Elastic Repository
+echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 2. Install Elasticsearch
+sudo apt update
+sudo apt install elasticsearch
+sudo systemctl daemon-reload
+sudo systemctl enable elasticsearch.service
+sudo systemctl start elasticsearch.service
+
+Configure Elasticsearch (Optional)
+sudo nano /etc/elasticsearch/elasticsearch.yml
+remove the hash (#) symbol 
+netowk.host
+http.port
+
+sudo systemctl restart elasticsearch.service
+
+Test Elasticsearch
+curl -X GET "localhost:9200"
+##################################################################
+show error use this
+sudo nano  /etc/elasticsearch/elasticsearch.yml
+
+and replace this setting with false
+# Enable security features
+xpack.security.enabled: false
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Install Kibana on Ubuntu
+sudo apt install kibana
+sudo systemctl enable kibana
+sudo ufw allow 5601/tcp
+sudo ufw allow 5601/tcp
+
+Secure Kibana (Optional)
+sudo apt install nginx -y
+sudo apt install apache2-utils -y
+sudo htpasswd -c /etc/nginx/htpasswd.users [username]
+cat /etc/nginx/htpasswd.users
+origanal file move kar di
+mv /etc/nginx/sites-available/default    /etc/nginx/sites-available/new-default
+nano /etc/nginx/sites-available/default
+server {
+    listen 80;
+    server_name localhost; # ip bi dal skate h 192.168.123.143
+    location / {
+        auth_basic "Restricted Access";
+        auth_basic_user_file /etc/nginx/htpasswd.users;
+        proxy_pass http://localhost:5601;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+sudo systemctl restart nginx
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 4: Install Logstash on Ubuntu
+sudo apt install logstash
+sudo systemctl start logstash
+
+
+########################################################################################################
+sudo filebeat modules  list
+isme kai option ah jaye ge agar system ka data collect krna ho to
+sudo  filebeat modules enable system
+
+sudo nano /etc/filebeat/modules.d/system.yml
+ set the log 
+ syslog:
+    enabled: false
+    var.paths:["/var/log/syslog*"]
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+   
+
+  auth:
+    enabled: false
+    var.paths:["/var/log/auth.log*"]
+    # Set custom paths for the log files. If
+ 
+sudo systemctl restart filebeat 
+systemctl stop filebeat
+systemctl start filebeat
+
+open kibana go to managment>Stack managment
+

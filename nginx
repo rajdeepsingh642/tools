@@ -1,0 +1,24 @@
+sudo apt-get install -d -y nginx
+ls /var/cache/apt/archives/
+scp /var/cache/apt/archives/*.deb user@private_subnet_machine:/path/to/destination/
+sudo dpkg -i *.deb
+sudo apt-get install -f
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+
+server {
+    listen 80;
+    server_name at.mindverseai.in;
+
+    location / {
+       proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+	}
+      }
+
+

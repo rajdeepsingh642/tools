@@ -1,0 +1,31 @@
+#!/bin/bash
+AWS_REGION="us-west-2"
+AWS_ACCOUNT_ID=""
+ECR_REPO="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+DOCKER_CONFIG_FILE="my-dockerconfig.json"
+PULL_SECRET_NAMESPACE="python-dev"
+SECRET_NAME="aws-ecr-secret"
+OPENSHIFT_USER=""
+OPENSHIFT_PASSWORD=""
+OPENSHIFT_API_URL=""
+OPENSHIFT_PROJECT="python-dev"
+# Step 1: Log in to OpenShift
+echo "Logging in to OpenShift..."
+/usr/local/bin/oc login --username="$OPENSHIFT_USER" --password="$OPENSHIFT_PASSWORD" --server="$OPENSHIFT_API_URL"
+#/usr/local/bin/oc login --username="$OPENSHIFT_USER" --password="$OPENSHIFT_PASSWORD" --server="$OPENSHIFT_API_URL" --insecure-skip-tls-verify=true
+# Step 2: Switch to the specified OpenShift project
+echo "Switching to OpenShift project: $OPENSHIFT_PROJECT"
+/usr/local/bin/oc project "$OPENSHIFT_PROJECT"
+# Step 3: Retrieve the ECR login password and store it in a file
+echo "Retrieving AWS ECR login password..."
+aws ecr get-login-password --region "$AWS_REGION" > ecr-login-password.txt
+# Step 4: Log in to ECR using the password from the file
+echo "Logging in to ECR registry..."
+cat ecr-login-password.txt | docker login --username AWS --password-stdin "$ECR_REPO"
+# Step 5: Copy the Docker config file to a custom location
+echo "Exporting Docker config to custom file..."
+cp ~/.docker/config.json "$DOCKER_CONFIG_FILE"
+# Step 6: Update the OpenShift pull-secret with the new Docker config
+echo "Updating OpenShift pull-secret with the new Docker config..."
+/usr/local/bin/oc set data secret -n "$PULL_SECRET_NAMESPACE" "$SECRET_NAME" --from-file=.dockerconfigjson="$DOCKER_CONFIG_FILE"
+echo "Process complete!"

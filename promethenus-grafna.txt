@@ -1,11 +1,10 @@
 wget https://github.com/prometheus/prometheus/releases/download/v3.2.1/prometheus-3.2.1.linux-amd64.tar.gz
 tar -xvzf prometheus-3.2.1.linux-amd64.tar.gz
 mv  prometheus-3.2.1.linux-amd64 prometheus
-cd prometheus
 sudo useradd --no-create-home --shell /bin/false prometheus
 sudo mkdir /etc/prometheus /var/lib/prometheus
 sudo mv prometheus /usr/local/bin/
-sudo mv promtool /usr/local/bin/
+sudo mv prometheus/promtool /usr/local/bin/
 sudo chown prometheus:prometheus /usr/local/bin/prometheus /usr/local/bin/promtool
  
 #Configure Prometheus on EC2 to Scrape Kubernetes Metrics

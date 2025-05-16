@@ -1,0 +1,40 @@
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    git \
+    lsb-release \
+    software-properties-common \
+    python3 \
+    python3-pip \
+    maven
+
+# Install Ansible
+RUN pip3 install --break-system-packages ansible
+
+# Install Docker CLI only
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | \
+    gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+    https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli
+
+# Install Trivy (container scanner)
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+# Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Add Jenkins user to docker group
+#RUN usermod -aG docker jenkins
+
+USER jenkins
